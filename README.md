@@ -5,7 +5,7 @@
 ---
 
 ## 📌 Descrizione del progetto
-ArdTeeth Street Food è una web application che consente di visualizzare un menu di prodotti street food e gestire gli ordini in modo semplice ed intuitivo.
+SQl-Street-Food è una web application che consente di visualizzare un menu di prodotti street food e gestire gli ordini in modo semplice ed intuitivo.
 
 L’applicazione permette di:
 - consultare il menu diviso per categorie
