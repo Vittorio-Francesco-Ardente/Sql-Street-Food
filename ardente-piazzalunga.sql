@@ -1,5 +1,6 @@
 --Sql Street Food--
-
+CREATE DATABASE street_food;
+USE DATABASE street_food;
 -- CATEGORIE
 CREATE TABLE categorie (
     id INT AUTO_INCREMENT PRIMARY KEY,
