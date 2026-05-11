@@ -10,7 +10,6 @@ if(!isset($_SESSION['ruolo']) || $_SESSION['ruolo'] != 'root')
 if(isset($_GET['id']))
 {
     $id = $_GET['id'];
-
     $sql = "DELETE FROM ordini WHERE id = ?";
     $stm = $pdo->prepare($sql);
     $stm->execute([$id]);
