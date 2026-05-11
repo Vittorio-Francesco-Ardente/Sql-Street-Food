@@ -12,9 +12,7 @@ CREATE TABLE prodotti (
     prezzo DECIMAL(6,2) NOT NULL,
     categoria_id INT,
     disponibile BOOLEAN DEFAULT TRUE,
-    FOREIGN KEY (categoria_id)
-        REFERENCES categorie(id)
-        ON DELETE SET NULL
+    FOREIGN KEY (categoria_id) REFERENCES categorie(id) ON DELETE SET NULL
 
 );
 
@@ -33,12 +31,8 @@ CREATE TABLE dettagli_ordine (
     prodotto_id INT,
     quantita INT NOT NULL,
     prezzo_unitario DECIMAL(6,2),
-    FOREIGN KEY (ordine_id)
-        REFERENCES ordini(id)
-        ON DELETE CASCADE,
-    FOREIGN KEY (prodotto_id)
-        REFERENCES prodotti(id)
-        ON DELETE CASCADE
+    FOREIGN KEY (ordine_id) REFERENCES ordini(id) ON DELETE CASCADE,
+    FOREIGN KEY (prodotto_id) REFERENCES prodotti(id) ON DELETE CASCADE
 );
 
 --CREAZIONE DEGLI UTENTI DEL DATABASE--
