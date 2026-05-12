@@ -1,11 +1,14 @@
 <?php
-require 'config.php';
 session_start();
+require 'config.php';
 
-if (!isset($_SESSION['ruolo']) || $_SESSION['ruolo'] != 'root')
-{
-    die("Accesso negato");
+/* ---- CONTROLLO LOGIN ---- */
+if (!isset($_SESSION['utente_id']) || !isset($_SESSION['utente_ruolo'])) {
+    die("Accesso negato. Effettua il login.");
 }
+
+$idUtente = $_SESSION['utente_id'];
+$ruolo = $_SESSION['utente_ruolo'];
 
 if (isset($_GET['id']))
 {
