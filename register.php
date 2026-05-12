@@ -5,12 +5,11 @@ $errore = "";
 $successo = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
     $nome = trim($_POST['nome'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $password = trim($_POST['password'] ?? '');
     $conferma = trim($_POST['password-confirm'] ?? '');
-
+    
     // RUOLO SELEZIONATO
     $ruolo = $_POST['ruolo'] ?? 'cliente';
 
@@ -28,21 +27,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errore = "Compila tutti i campi";
 
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-
         $errore = "Email non valida";
-
     } elseif (strlen($password) < 6) {
-
         $errore = "Password minimo 6 caratteri";
-
     } elseif ($password !== $conferma) {
-
         $errore = "Le password non coincidono";
-
     } else {
 
         try {
-
             // controllo email esistente
             $check = $pdo->prepare("
                 SELECT id
@@ -53,17 +45,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $check->execute([
                 ':email' => $email
             ]);
-
             if ($check->fetch()) {
-
                 $errore = "Email già registrata";
-
             } else {
-
                 $pdo->beginTransaction();
 
                 $hash = password_hash($password, PASSWORD_BCRYPT);
-
                 $insert = $pdo->prepare("
                     INSERT INTO utenti(
                         nome,
@@ -87,7 +74,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]);
 
                 $pdo->commit();
-
                 $successo = "Registrazione completata";
             }
 
@@ -96,7 +82,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
-
             $errore = "Errore registrazione: " . $e->getMessage();
         }
     }
@@ -113,13 +98,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Registrazione</title>
 
     <link rel="stylesheet" href="style.css">
-
 </head>
-
 <body>
-
 <div class="background-grid"></div>
-
 <div class="container">
 
     <form class="card" method="POST">
@@ -173,10 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             Hai già un account?
             <a href="login.php">Accedi</a>
         </div>
-
     </form>
-
 </div>
-
 </body>
 </html>
