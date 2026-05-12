@@ -1,43 +1,71 @@
 <?php
-require 'config.php';
 session_start();
+require 'config.php';
 
-if (!isset($_SESSION['id'])) {
+/* ---- CONTROLLO LOGIN ---- */
+if (!isset($_SESSION['utente_id'], $_SESSION['utente_ruolo'])) {
     die("Accesso negato");
 }
 
-$idUtente = $_SESSION['id'];
+$idUtente = $_SESSION['utente_id'];
+$ruolo = $_SESSION['utente_ruolo'];
+
 $idOrdine = $_GET['id'] ?? null;
 
 if (!$idOrdine) {
     die("Ordine non valido");
 }
 
-$sqlProdotti = "SELECT id, nome, prezzo, disponibile FROM prodotti WHERE disponibile = 1";
+/* ---- PRODOTTI DISPONIBILI ---- */
+$sqlProdotti = "
+    SELECT id, nome, prezzo, disponibile 
+    FROM prodotti 
+    WHERE disponibile = 1
+";
+
 $stm = $pdo->prepare($sqlProdotti);
 $stm->execute();
 $prodotti = $stm->fetchAll(PDO::FETCH_ASSOC);
 
-$sqlOrdine = "SELECT * FROM ordini WHERE id = ? AND utente_id = ?";
-$stmOrdine = $pdo->prepare($sqlOrdine);
-$stmOrdine->execute([$idOrdine, $idUtente]);
+/* ---- CONTROLLO ORDINE (ROOT O CLIENTE) ---- */
+if ($ruolo === 'root') {
+
+    $sqlOrdine = "SELECT * FROM ordini WHERE id = ?";
+    $stmOrdine = $pdo->prepare($sqlOrdine);
+    $stmOrdine->execute([$idOrdine]);
+
+} else {
+
+    $sqlOrdine = "SELECT * FROM ordini WHERE id = ? AND utente_id = ?";
+    $stmOrdine = $pdo->prepare($sqlOrdine);
+    $stmOrdine->execute([$idOrdine, $idUtente]);
+}
+
 $ordine = $stmOrdine->fetch(PDO::FETCH_ASSOC);
 
 if (!$ordine) {
     die("Ordine non trovato");
 }
 
-$sqlDettagli = "SELECT * FROM dettagli_ordine WHERE ordine_id = ?";
+/* ---- DETTAGLI ORDINE ---- */
+$sqlDettagli = "
+    SELECT * 
+    FROM dettagli_ordine 
+    WHERE ordine_id = ?
+";
+
 $stmDettagli = $pdo->prepare($sqlDettagli);
 $stmDettagli->execute([$idOrdine]);
 $detagli = $stmDettagli->fetchAll(PDO::FETCH_ASSOC);
 
+/* ---- SALVATAGGIO MODIFICA ---- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
 
         $pdo->beginTransaction();
 
+        /* elimina vecchi dettagli */
         $del = $pdo->prepare("DELETE FROM dettagli_ordine WHERE ordine_id = ?");
         $del->execute([$idOrdine]);
 
@@ -47,14 +75,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $totale = 0;
 
         $getPrezzo = $pdo->prepare("SELECT prezzo FROM prodotti WHERE id = ?");
-        $insertDettaglio = $pdo->prepare(
-            "INSERT INTO dettagli_ordine (ordine_id, prodotto_id, quantita, prezzo_unitario)
-             VALUES (?, ?, ?, ?)"
-        );
+        $insertDettaglio = $pdo->prepare("
+            INSERT INTO dettagli_ordine 
+            (ordine_id, prodotto_id, quantita, prezzo_unitario)
+            VALUES (?, ?, ?, ?)
+        ");
 
         foreach ($prodottiSelezionati as $i => $idProdotto) {
 
             $qta = (int)$quantita[$i];
+
+            if ($qta <= 0) continue;
 
             $getPrezzo->execute([$idProdotto]);
             $prezzo = $getPrezzo->fetchColumn();
@@ -69,7 +100,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
         }
 
-        $update = $pdo->prepare("UPDATE ordini SET totale = ?, stato = 'in elaborazione' WHERE id = ?");
+        $update = $pdo->prepare("
+            UPDATE ordini 
+            SET totale = ?, stato = 'in elaborazione' 
+            WHERE id = ?
+        ");
+
         $update->execute([$totale, $idOrdine]);
 
         $pdo->commit();
@@ -92,81 +128,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <title>MODIFICA ORDINE</title>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-:root{
-    --bg:#060816;
-    --card:#0f172a;
-    --border:rgba(255,255,255,0.08);
-    --primary:#2563eb;
-    --text:#f8fafc;
-}
-
-body{
-    font-family:'Inter',sans-serif;
-    margin:0;
-    padding:40px;
-    background:var(--bg);
-    color:var(--text);
-}
-
-.container{
-    max-width:900px;
-    margin:auto;
-}
-
-h1{
-    font-size:34px;
-    margin-bottom:25px;
-}
-
-.box{
-    background:var(--card);
-    border:1px solid var(--border);
-    padding:25px;
-    border-radius:20px;
-    margin-bottom:20px;
-}
-
-select,input{
-    width:100%;
-    padding:12px;
-    margin-top:8px;
-    margin-bottom:15px;
-    border-radius:12px;
-    border:1px solid var(--border);
-    background:#0b1120;
-    color:white;
-}
-
-button{
-    padding:12px 18px;
-    border:none;
-    border-radius:12px;
-    background:linear-gradient(135deg,#2563eb,#0ea5e9);
-    color:white;
-    font-weight:600;
-    cursor:pointer;
-    margin-right:10px;
-}
-
-.riga{
-    border-bottom:1px solid var(--border);
-    padding-bottom:15px;
-    margin-bottom:15px;
-}
+body{font-family:Arial;margin:30px;background:#f4f4f4}
+.container{background:white;padding:20px}
+.box{margin-bottom:15px}
+select,input{width:100%;padding:8px;margin-top:5px}
+button{padding:10px;background:#333;color:white;border:none;cursor:pointer}
+a button{background:red}
 </style>
+
 </head>
 <body>
 
 <div class="container">
 
-<h1>MODIFICA ORDINE #<?= $idOrdine ?></h1>
+<h1>MODIFICA ORDINE #<?= htmlspecialchars($idOrdine) ?></h1>
 
 <form method="POST">
 
 <?php for ($i = 0; $i < 3; $i++): ?>
-    <div class="box riga">
+    <div class="box">
 
         <label>Prodotto</label>
         <select name="prodotto[]">
@@ -184,7 +164,10 @@ button{
 <?php endfor; ?>
 
 <button type="submit">SALVA MODIFICHE</button>
-<a href="home.php"><button type="button">ANNULLA</button></a>
+
+<a href="home.php">
+    <button type="button">ANNULLA</button>
+</a>
 
 </form>
 
