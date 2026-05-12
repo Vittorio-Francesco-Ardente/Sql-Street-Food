@@ -5,7 +5,7 @@ require 'config.php';
 if (!isset($_SESSION['utente_id'])) {
     die("Accesso negato");
 }
- 
+
 $idUtente = $_SESSION['utente_id'];
  
 /* ---- PRODOTTI ---- */
@@ -18,30 +18,25 @@ $prodotti = $pdo->query("
  
 /* ---- CREA ORDINE ---- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
- 
     try {
- 
         $pdo->beginTransaction();
- 
         $idProdotti = $_POST['prodotto'];
         $quantita = $_POST['quantita'];
- 
         $totale = 0;
  
         /* ---- calcolo totale ---- */
         foreach ($idProdotti as $i => $idProdotto) {
- 
             $qta = (int)$quantita[$i];
  
             if ($qta < 1) $qta = 1;
- 
+
             $stmt = $pdo->prepare("SELECT prezzo FROM prodotti WHERE id = ?");
             $stmt->execute([$idProdotto]);
             $prezzo = $stmt->fetchColumn();
  
             $totale += $prezzo * $qta;
         }
- 
+
         /* ---- crea ordine ---- */
         $stmt = $pdo->prepare("
             INSERT INTO ordini (utente_id, data_ordine, stato, totale)
@@ -49,7 +44,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ");
  
         $stmt->execute([$idUtente, $totale]);
- 
         $idOrdine = $pdo->lastInsertId();
  
         /* ---- dettagli ---- */
@@ -60,9 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ");
  
         foreach ($idProdotti as $i => $idProdotto) {
- 
             $qta = (int)$quantita[$i];
- 
             $stmtPrice = $pdo->prepare("SELECT prezzo FROM prodotti WHERE id = ?");
             $stmtPrice->execute([$idProdotto]);
             $prezzo = $stmtPrice->fetchColumn();
@@ -76,10 +68,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
  
         $pdo->commit();
- 
         header("Location: home.php?success=1");
         exit;
- 
+
     } catch (Exception $e) {
         $pdo->rollBack();
         die("Errore: " . $e->getMessage());
@@ -127,10 +118,8 @@ function aggiungiRiga() {
     container.insertAdjacentHTML("beforeend", html);
 }
 </script>
- 
 </head>
 <body>
- 
 <div class="box">
  
 <h1>NUOVO ORDINE</h1>
@@ -152,24 +141,16 @@ function aggiungiRiga() {
  
             <label>Quantità</label>
             <input type="number" name="quantita[]" value="1" min="1">
- 
         </div>
- 
     </div>
- 
     <button type="button" class="add" onclick="aggiungiRiga()">a
         + AGGIUNGI PRODOTTO
     </button>
- 
     <button type="submit">CREA ORDINE</button>
- 
 </form>
- 
 <br>
- 
 <a href="home.php">Torna alla home</a>
- 
 </div>
- 
+
 </body>
 </html>
