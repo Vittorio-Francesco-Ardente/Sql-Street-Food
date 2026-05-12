@@ -100,12 +100,18 @@ th{background:#333;color:white}
     <h3>Ordine #<?= $o['id'] ?></h3>
     <p><?= $o['data_ordine'] ?> | <?= $o['stato'] ?> | <?= $o['totale'] ?> €</p>
 
+    <!-- ELIMINA (solo root) -->
     <?php if ($ruolo === 'root'): ?>
         <a href="elimina_ordine.php?id=<?= $o['id'] ?>"
            onclick="return confirm('Eliminare ordine?')">
             <button class="btn-elimina">ELIMINA</button>
         </a>
     <?php endif; ?>
+
+    <!-- MODIFICA ORDINE (AGGIUNTO) -->
+    <a href="modifica_ordine.php?id=<?= $o['id'] ?>">
+        <button class="btn">MODIFICA ORDINE</button>
+    </a>
 
     <table>
         <tr>
