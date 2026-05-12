@@ -143,7 +143,7 @@ function aggiungiRiga() {
             <input type="number" name="quantita[]" value="1" min="1">
         </div>
     </div>
-    <button type="button" class="add" onclick="aggiungiRiga()">a
+    <button type="button" class="add" onclick="aggiungiRiga()">
         + AGGIUNGI PRODOTTO
     </button>
     <button type="submit">CREA ORDINE</button>
