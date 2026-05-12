@@ -6,7 +6,6 @@ require 'config.php';
 if (!isset($_SESSION['utente_id']) || !isset($_SESSION['utente_ruolo'])) {
     die("Accesso negato. Effettua il login.");
 }
-
 $idUtente = $_SESSION['utente_id'];
 $ruolo = $_SESSION['utente_ruolo'];
 
@@ -31,6 +30,5 @@ if (isset($_GET['id']))
         die("Errore: " . $e->getMessage());
     }
 }
-
 header("Location: home.php");
 exit();
