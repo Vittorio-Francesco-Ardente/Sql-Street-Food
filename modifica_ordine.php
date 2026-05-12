@@ -9,7 +9,6 @@ if (!isset($_SESSION['utente_id'], $_SESSION['utente_ruolo'])) {
 
 $idUtente = $_SESSION['utente_id'];
 $ruolo = $_SESSION['utente_ruolo'];
-
 $idOrdine = $_GET['id'] ?? null;
 
 if (!$idOrdine) {
@@ -40,13 +39,11 @@ if ($ruolo === 'root') {
     $stmOrdine = $pdo->prepare($sqlOrdine);
     $stmOrdine->execute([$idOrdine, $idUtente]);
 }
-
 $ordine = $stmOrdine->fetch(PDO::FETCH_ASSOC);
 
 if (!$ordine) {
     die("Ordine non trovato");
 }
-
 /* ---- DETTAGLI ORDINE ---- */
 $sqlDettagli = "
     SELECT * 
@@ -60,20 +57,14 @@ $detagli = $stmDettagli->fetchAll(PDO::FETCH_ASSOC);
 
 /* ---- SALVATAGGIO MODIFICA ---- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
     try {
-
         $pdo->beginTransaction();
-
         /* elimina vecchi dettagli */
         $del = $pdo->prepare("DELETE FROM dettagli_ordine WHERE ordine_id = ?");
         $del->execute([$idOrdine]);
-
         $prodottiSelezionati = $_POST['prodotto'];
         $quantita = $_POST['quantita'];
-
         $totale = 0;
-
         $getPrezzo = $pdo->prepare("SELECT prezzo FROM prodotti WHERE id = ?");
         $insertDettaglio = $pdo->prepare("
             INSERT INTO dettagli_ordine 
@@ -82,16 +73,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ");
 
         foreach ($prodottiSelezionati as $i => $idProdotto) {
-
             $qta = (int)$quantita[$i];
-
             if ($qta <= 0) continue;
 
             $getPrezzo->execute([$idProdotto]);
             $prezzo = $getPrezzo->fetchColumn();
-
             $totale += $prezzo * $qta;
-
             $insertDettaglio->execute([
                 $idOrdine,
                 $idProdotto,
@@ -99,22 +86,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $prezzo
             ]);
         }
-
         $update = $pdo->prepare("
             UPDATE ordini 
             SET totale = ?, stato = 'in elaborazione' 
             WHERE id = ?
         ");
-
         $update->execute([$totale, $idOrdine]);
-
         $pdo->commit();
-
         header("Location: home.php");
         exit();
-
     } catch (Exception $e) {
-
         $pdo->rollBack();
         die("Errore: " . $e->getMessage());
     }
@@ -138,16 +119,13 @@ a button{background:red}
 
 </head>
 <body>
-
 <div class="container">
-
 <h1>MODIFICA ORDINE #<?= htmlspecialchars($idOrdine) ?></h1>
 
 <form method="POST">
 
 <?php for ($i = 0; $i < 3; $i++): ?>
     <div class="box">
-
         <label>Prodotto</label>
         <select name="prodotto[]">
             <?php foreach ($prodotti as $p): ?>
@@ -156,22 +134,17 @@ a button{background:red}
                 </option>
             <?php endforeach; ?>
         </select>
-
         <label>Quantità</label>
         <input type="number" name="quantita[]" min="1" value="1">
-
     </div>
 <?php endfor; ?>
 
 <button type="submit">SALVA MODIFICHE</button>
-
 <a href="home.php">
     <button type="button">ANNULLA</button>
 </a>
-
 </form>
-
 </div>
-
+    
 </body>
 </html>
