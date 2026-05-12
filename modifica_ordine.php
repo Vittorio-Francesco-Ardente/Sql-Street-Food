@@ -8,6 +8,7 @@ if (!isset($_SESSION['utente_id'], $_SESSION['utente_ruolo'])) {
 
 $idUtente = $_SESSION['utente_id'];
 $ruolo = $_SESSION['utente_ruolo'];
+
 $idOrdine = $_GET['id'] ?? null;
 
 if (!$idOrdine) {
@@ -19,6 +20,7 @@ $stm = $pdo->prepare("
     SELECT id, nome, prezzo
     FROM prodotti
     WHERE disponibile = 1
+    ORDER BY nome
 ");
 $stm->execute();
 $prodotti = $stm->fetchAll(PDO::FETCH_ASSOC);
@@ -49,7 +51,7 @@ if (!$ordine) {
     die("Ordine non trovato");
 }
 
-/* ---- DETTAGLI ORDINE ---- */
+/* ---- DETTAGLI ---- */
 $stmDet = $pdo->prepare("
     SELECT *
     FROM dettagli_ordine
@@ -128,34 +130,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="it">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MODIFICA ORDINE</title>
 
 <style>
-body{font-family:Arial;margin:30px;background:#f4f4f4}
-.container{background:white;padding:20px}
-.box{margin-bottom:15px}
-select,input{width:100%;padding:8px;margin-top:5px}
-
-button{
-    padding:10px;
-    border:none;
-    cursor:pointer;
-    font-weight:bold;
+body {
+    font-family: Arial;
+    margin: 30px;
+    background: #f4f4f4;
 }
 
-.save{
-    background:#333;
-    color:white;
+.box {
+    background: white;
+    padding: 20px;
+    max-width: 600px;
+    margin: auto;
 }
 
-.cancel{
-    background:red;
-    color:white;
-    text-decoration:none;
-    display:inline-block;
-    text-align:center;
-    margin-left:10px;
-    padding:10px;
+.riga {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+label {
+    font-weight: bold;
+}
+
+select, input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    cursor: pointer;
+    background: #333;
+    color: white;
+}
+
+button.add {
+    background: green;
+    margin-bottom: 10px;
+}
+
+a {
+    display: block;
+    margin-top: 15px;
+    text-align: center;
+    color: #333;
 }
 </style>
 
@@ -163,71 +190,65 @@ button{
 
 <body>
 
-<div class="container">
+<div class="box">
 
-<h1>MODIFICA ORDINE #<?= htmlspecialchars($idOrdine) ?></h1>
+<h1>MODIFICA ORDINE #<?= $idOrdine ?></h1>
 
 <form method="POST">
 
-<?php if (count($detagli) > 0): ?>
+    <?php if (count($detagli) > 0): ?>
 
-    <?php foreach ($detagli as $d): ?>
+        <?php foreach ($detagli as $d): ?>
 
-        <div class="box">
+            <div class="riga">
+
+                <label>Prodotto</label>
+
+                <select name="prodotto[]">
+                    <?php foreach ($prodotti as $p): ?>
+                        <option value="<?= $p['id'] ?>"
+                            <?= $p['id'] == $d['prodotto_id'] ? 'selected' : '' ?>>
+                            <?= $p['nome'] ?> - <?= $p['prezzo'] ?> €
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+
+                <label>Quantità</label>
+                <input type="number" name="quantita[]" value="<?= $d['quantita'] ?>" min="1">
+
+            </div>
+
+        <?php endforeach; ?>
+
+    <?php else: ?>
+
+        <div class="riga">
 
             <label>Prodotto</label>
 
             <select name="prodotto[]">
-
                 <?php foreach ($prodotti as $p): ?>
-                    <option value="<?= $p['id'] ?>"
-                        <?= $p['id'] == $d['prodotto_id'] ? 'selected' : '' ?>>
+                    <option value="<?= $p['id'] ?>">
                         <?= $p['nome'] ?> - <?= $p['prezzo'] ?> €
                     </option>
                 <?php endforeach; ?>
-
             </select>
 
             <label>Quantità</label>
-
-            <input type="number"
-                   name="quantita[]"
-                   min="1"
-                   value="<?= $d['quantita'] ?>">
+            <input type="number" name="quantita[]" value="1" min="1">
 
         </div>
 
-    <?php endforeach; ?>
+    <?php endif; ?>
 
-<?php else: ?>
-
-    <div class="box">
-
-        <label>Prodotto</label>
-
-        <select name="prodotto[]">
-            <?php foreach ($prodotti as $p): ?>
-                <option value="<?= $p['id'] ?>">
-                    <?= $p['nome'] ?> - <?= $p['prezzo'] ?> €
-                </option>
-            <?php endforeach; ?>
-        </select>
-
-        <label>Quantità</label>
-
-        <input type="number" name="quantita[]" min="1" value="1">
-
-    </div>
-
-<?php endif; ?>
-
-<button type="submit" class="save">SALVA MODIFICHE</button>
-
-<a href="home.php" class="cancel">
-    ANNULLA
-</a>
+    <button type="submit">SALVA MODIFICHE</button>
+    <button type="button" class="add" onclick="location.href='home.php'">
+        ANNULLA
+    </button>
 
 </form>
+
+<a href="home.php">Torna alla home</a>
 
 </div>
 
