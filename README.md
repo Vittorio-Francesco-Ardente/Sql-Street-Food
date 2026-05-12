@@ -272,3 +272,6 @@ Sono state implementate:
 - relazioni tra tabelle
 - utilizzo di PHP con PDO
 - gestione transazioni ACID
+
+# 📝 Note aggiuntive
+- Alcune parti del CSS e questo readme sono state realizzate con supporto di strumenti di intelligenza artificiale.
