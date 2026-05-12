@@ -1,61 +1,79 @@
 <?php
 require 'config.php';
+
 session_start();
 
 /* ---- Controllo sul login ---- */
-if(!isset($_SESSION['id']) || !isset($_SESSION['ruolo']))
+if (!isset($_SESSION['id']) || !isset($_SESSION['ruolo']))
 {
     die("Accesso negato. Effettua il login.");
 }
+
 $idUtente = $_SESSION['id'];
 $ruolo = $_SESSION['ruolo'];
 
-$sqlMenu = "SELECT prodotti.id, prodotti.nome, prodotti.descrizione, prodotti.prezzo, prodotti.disponibile, categorie.nome AS categoria
-            FROM prodotti
-            LEFT JOIN categorie
-            ON prodotti.categoria_id = categorie.id
-            ORDER BY prodotti.id";
-
-$stmMenu = $pdo->prepare($sqlMenu);
-$stmMenu->execute();
-$menu = $stmMenu->fetchAll(PDO::FETCH_ASSOC);
-
-
-/*--Viene eseguito un controllo sul permesso dell'utente, se è root visualizza tutti gli ordini--*/
-if($ruolo == 'root')
+try
 {
-    $sqlOrdini = "SELECT id, data_ordine, stato, totale
-                  FROM ordini
-                  ORDER BY id";
+    $pdo->exec("SET SESSION innodb_lock_wait_timeout = 10");
+    $pdo->exec("SET autocommit = 0");
+    $pdo->exec("BEGIN WORK");
 
-    $stmOrdini = $pdo->prepare($sqlOrdini);
-    $stmOrdini->execute();
+    $sqlMenu = "SELECT prodotti.id, prodotti.nome, prodotti.descrizione, prodotti.prezzo, prodotti.disponibile, categorie.nome AS categoria
+                FROM prodotti
+                LEFT JOIN categorie
+                ON prodotti.categoria_id = categorie.id
+                ORDER BY prodotti.id";
+
+    $stmMenu = $pdo->prepare($sqlMenu);
+    $stmMenu->execute();
+
+    $menu = $stmMenu->fetchAll(PDO::FETCH_ASSOC);
+
+    /*--Viene eseguito un controllo sul permesso dell'utente, se è root visualizza tutti gli ordini--*/
+    if ($ruolo == 'root')
+    {
+        $sqlOrdini = "SELECT id, data_ordine, stato, totale
+                      FROM ordini
+                      ORDER BY id";
+
+        $stmOrdini = $pdo->prepare($sqlOrdini);
+        $stmOrdini->execute();
+    }
+    else
+    {
+        $sqlOrdini = "SELECT id, data_ordine, stato, totale
+                      FROM ordini
+                      WHERE utente_id = ?
+                      ORDER BY id";
+
+        $stmOrdini = $pdo->prepare($sqlOrdini);
+        $stmOrdini->execute([$idUtente]);
+    }
+
+    $ordini = $stmOrdini->fetchAll(PDO::FETCH_ASSOC);
+
+    $sqlDettagli = "SELECT dettagli_ordine.ordine_id, prodotti.nome AS prodotto, dettagli_ordine.quantita, dettagli_ordine.prezzo_unitario
+                    FROM dettagli_ordine
+                    INNER JOIN prodotti
+                    ON dettagli_ordine.prodotto_id = prodotti.id";
+
+    $stmDettagli = $pdo->prepare($sqlDettagli);
+    $stmDettagli->execute();
+
+    $dettagli = [];
+
+    while ($riga = $stmDettagli->fetch(PDO::FETCH_ASSOC))
+    {
+        $dettagli[$riga['ordine_id']][] = $riga;
+    }
+
+    $pdo->exec("COMMIT");
 }
-else
+catch (Exception $e)
 {
-    $sqlOrdini = "SELECT id, data_ordine, stato, totale
-                  FROM ordini
-                  WHERE utente_id = ?
-                  ORDER BY id";
+    $pdo->exec("ROLLBACK");
 
-    $stmOrdini = $pdo->prepare($sqlOrdini);
-    $stmOrdini->execute([$idUtente]);
-}
-$ordini = $stmOrdini->fetchAll(PDO::FETCH_ASSOC);
-
-$sqlDettagli = "SELECT dettagli_ordine.ordine_id, prodotti.nome AS prodotto, dettagli_ordine.quantita, dettagli_ordine.prezzo_unitario
-                FROM dettagli_ordine
-                INNER JOIN prodotti
-                ON dettagli_ordine.prodotto_id = prodotti.id";
-
-$stmDettagli = $pdo->prepare($sqlDettagli);
-$stmDettagli->execute();
-
-$dettagli = [];
-
-while($riga = $stmDettagli->fetch(PDO::FETCH_ASSOC))
-{
-    $dettagli[$riga['ordine_id']][] = $riga;
+    die("Errore: " . $e->getMessage());
 }
 ?>
 
@@ -64,7 +82,9 @@ while($riga = $stmDettagli->fetch(PDO::FETCH_ASSOC))
 <head>
 <meta charset="UTF-8">
 <title>HOME RISTORANTE</title>
+
 <style>
+
 body{
     font-family: Arial;
     margin: 30px;
@@ -79,7 +99,8 @@ table{
     margin-bottom: 40px;
     background-color: white;
 }
-th, td{
+th,
+td{
     border: 1px solid #ccc;
     padding: 10px;
 }
@@ -116,9 +137,11 @@ button:hover{
 }
 </style>
 </head>
+
 <body>
 <h1>MENU'</h1>
 <table>
+
 <thead>
 <tr>
     <th>ID</th>
@@ -129,17 +152,16 @@ button:hover{
     <th>DISPONIBILE</th>
 </tr>
 </thead>
-
 <tbody>
-<?php foreach($menu as $prodotto): ?>
+
+<?php foreach ($menu as $prodotto): ?>
 <tr>
     <td><?= $prodotto['id'] ?></td>
     <td><?= $prodotto['nome'] ?></td>
     <td><?= $prodotto['descrizione'] ?></td>
     <td><?= $prodotto['prezzo'] ?> €</td>
     <td><?= $prodotto['categoria'] ?></td>
-
-    <?php if($prodotto['disponibile']): ?>
+    <?php if ($prodotto['disponibile']): ?>
         <td class="disponibile">SI</td>
     <?php else: ?>
         <td class="non-disponibile">NO</td>
@@ -154,20 +176,26 @@ button:hover{
     <button>NUOVO ORDINE</button>
 </a>
 <br><br>
-<?php foreach($ordini as $ordine): ?>
-
+<?php foreach ($ordini as $ordine): ?>
 <div class="ordine-box">
     <h3>Ordine #<?= $ordine['id'] ?></h3>
-    <p><strong>Data:</strong> <?= $ordine['data_ordine'] ?></p>
-    <p><strong>Stato:</strong> <?= $ordine['stato'] ?></p>
-    <p><strong>Totale:</strong> <?= $ordine['totale'] ?> €</p>
-
+    <p>
+        <strong>Data:</strong>
+        <?= $ordine['data_ordine'] ?>
+    </p>
+    <p>
+        <strong>Stato:</strong>
+        <?= $ordine['stato'] ?>
+    </p>
+    <p>
+        <strong>Totale:</strong>
+        <?= $ordine['totale'] ?> €
+    </p>
     <a href="modifica_ordine.php?id=<?= $ordine['id'] ?>">
         <button>MODIFICA ORDINE</button>
     </a>
-
     <!--La funzione elimina è disponibile solamente agli amminstratori di sistema-->
-    <?php if($ruolo == 'root'): ?>
+    <?php if ($ruolo == 'root'): ?>
         <a href="elimina_ordine.php?id=<?= $ordine['id'] ?>"
            onclick="return confirm('Sei sicuro di voler eliminare questo ordine?')">
             <button class="btn-elimina">ELIMINA</button>
@@ -183,8 +211,8 @@ button:hover{
             </tr>
         </thead>
         <tbody>
-        <?php if(isset($dettagli[$ordine['id']])): ?>
-            <?php foreach($dettagli[$ordine['id']] as $d): ?>
+        <?php if (isset($dettagli[$ordine['id']])): ?>
+            <?php foreach ($dettagli[$ordine['id']] as $d): ?>
                 <tr>
                     <td><?= $d['prodotto'] ?></td>
                     <td><?= $d['quantita'] ?></td>
