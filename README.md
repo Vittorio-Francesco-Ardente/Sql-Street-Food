@@ -1,114 +1,274 @@
 # 🍔 Sql-Street-Food
-> Web Application per la gestione di ordini street food  
-> by Ardente & Piazzalunga
+
+> Web Application per la gestione di prodotti e ordini street food  
+> Progetto sviluppato da Ardente & Piazzalunga
 
 ---
 
-## 📌 Descrizione del progetto
-SQl-Street-Food è una web application che consente di visualizzare un menu di prodotti street food e gestire gli ordini in modo semplice ed intuitivo.
+# 📌 Descrizione del progetto
 
-L’applicazione permette di:
-- consultare il menu diviso per categorie
+Sql-Street-Food è una web application sviluppata in PHP e MySQL che permette la gestione di un sistema di ordinazioni per uno street food.
+
+L’applicazione consente agli utenti autenticati di:
+- visualizzare il menu dei prodotti
+- consultare le categorie disponibili
 - creare nuovi ordini
-- visualizzare gli ordini effettuati
-- gestire i prodotti (aggiunta, modifica, eliminazione)
+- visualizzare lo storico degli ordini effettuati
+
+Gli amministratori (`root`) possono inoltre:
+- eliminare ordini
+- gestire il catalogo prodotti
+- controllare l’intero sistema
+
+Il progetto utilizza un database relazionale MySQL con relazioni tra utenti, prodotti, categorie e ordini.
 
 ---
 
-## 👨‍💻 Autori
-- Ardente  
-- Piazzalunga  
+# 👨‍💻 Autori
+- Ardente
+- Piazzalunga
 
 ---
 
-## 🗄️ Struttura del database
+# 🗄️ Struttura del database
 
-Il database è composto da 4 tabelle principali:
-
-### 1. categorie
-Contiene le categorie dei prodotti (es. Burger, Bevande)
-- id (PK)
-- nome
-
-### 2. prodotti
-Contiene i prodotti del menu
-- id (PK)
-- nome
-- descrizione
-- prezzo
-- categoria_id (FK)
-- disponibile
-
-### 3. ordini
-Contiene gli ordini effettuati
-- id (PK)
-- data_ordine
-- stato
-- totale
-
-### 4. dettagli_ordine
-Associa prodotti agli ordini (relazione N:N)
-- id (PK)
-- ordine_id (FK)
-- prodotto_id (FK)
-- quantita
-- prezzo_unitario
+Il database è composto dalle seguenti tabelle principali.
 
 ---
 
-## 🔗 Relazioni
-- Una categoria può contenere più prodotti (1:N)
-- Un ordine può contenere più prodotti (1:N)
-- I prodotti sono collegati agli ordini tramite la tabella dettagli_ordine (N:N)
+## 1. utenti
+Contiene gli utenti registrati nel sistema.
+
+### Campi
+- `id` (PK)
+- `username`
+- `password`
+- `ruolo`
+
+### Note
+Il campo `ruolo` distingue:
+- utenti normali
+- amministratori (`root`)
 
 ---
 
-## ⚙️ Funzionalità implementate
+## 2. categorie
+Contiene le categorie dei prodotti.
 
-### ✅ CRUD completo
-- Inserimento prodotti
+### Campi
+- `id` (PK)
+- `nome`
+
+### Esempi
+- Burger
+- Bevande
+- Dolci
+
+---
+
+## 3. prodotti
+Contiene i prodotti presenti nel menu.
+
+### Campi
+- `id` (PK)
+- `nome`
+- `descrizione`
+- `prezzo`
+- `categoria_id` (FK)
+- `disponibile`
+
+### Note
+Ogni prodotto appartiene a una categoria.
+
+---
+
+## 4. ordini
+Contiene gli ordini effettuati dagli utenti.
+
+### Campi
+- `id` (PK)
+- `utente_id` (FK)
+- `data_ordine`
+- `stato`
+- `totale`
+
+### Note
+Ogni ordine è associato a un utente.
+
+---
+
+## 5. dettagli_ordine
+Tabella di associazione tra ordini e prodotti.
+
+### Campi
+- `id` (PK)
+- `ordine_id` (FK)
+- `prodotto_id` (FK)
+- `quantita`
+- `prezzo_unitario`
+
+### Note
+Permette di salvare:
+- i prodotti acquistati
+- la quantità
+- il prezzo al momento dell’ordine
+
+---
+
+# 🔗 Relazioni
+
+- Una categoria può contenere più prodotti → `1 : N`
+- Un utente può effettuare più ordini → `1 : N`
+- Un ordine può contenere più prodotti → `N : N`
+- La relazione tra ordini e prodotti è gestita tramite `dettagli_ordine`
+
+---
+
+# ⚙️ Funzionalità implementate
+
+## ✅ Gestione utenti
+- Login tramite sessione PHP
+- Controllo permessi
+- Gestione ruolo amministratore (`root`)
+
+---
+
+## ✅ Gestione prodotti
 - Visualizzazione menu
+- Inserimento prodotti
 - Modifica prodotti
 - Eliminazione prodotti
-
-### 🛒 Gestione ordini
-- Creazione ordine
-- Aggiunta prodotti all’ordine
-- Calcolo totale
-
-### 🔍 Extra
-- Filtro per categoria
-- Stato ordine (in preparazione, pronto, completato)
+- Controllo disponibilità
 
 ---
 
-## 🛠️ Tecnologie utilizzate
-- HTML / CSS
+## ✅ Gestione ordini
+- Creazione nuovi ordini
+- Visualizzazione ordini utente
+- Visualizzazione globale ordini per amministratore
+- Calcolo automatico totale ordine
+
+---
+
+## ✅ Gestione dettagli ordine
+- Associazione prodotti ↔ ordini
+- Quantità acquistata
+- Prezzo unitario salvato nel database
+
+---
+
+# 🔒 Sicurezza e integrità
+
+Il progetto utilizza:
+- query preparate (`prepare`)
+- protezione SQL Injection
+- sessioni PHP
+- gestione transazioni ACID (`BEGIN WORK`, `COMMIT`, `ROLLBACK`)
+
+---
+
+# 🛠️ Tecnologie utilizzate
+
+- HTML5
+- CSS3
 - PHP
 - MySQL
+- PDO
 
 ---
 
-## 🚀 Istruzioni per l’avvio
+# 🚀 Avvio del progetto
 
-1. Importare il file `.sql` nel database MySQL
-2. Configurare la connessione al database nel file PHP
-3. Avviare un server locale (XAMPP / WAMP)
-4. Aprire il progetto nel browser
-
----
-
-## 📂 Contenuto della consegna
-- File sorgenti della web app
-- Script SQL per il database
-- README (questo file)
+## 1. Installare un server locale
+Installare uno dei seguenti software:
+- XAMPP
+- WAMP
+- Laragon
 
 ---
 
-## ⚠️ Note
-- I vincoli `ON DELETE CASCADE` permettono di mantenere la coerenza dei dati
-- Il sistema è progettato per essere semplice ma funzionale
+## 2. Copiare il progetto
+Inserire la cartella del progetto dentro:
+```text
+Esempio:
+```text
+C:/xampp/htdocs/Sql-Street-Food
+```
 
-## ✅ Conclusione
-Il progetto soddisfa tutti i requisiti richiesti, implementando una web application completa con database relazionale e operazioni CRUD.
-``
+---
+
+## 3. Avviare Apache e MySQL
+Dal pannello di controllo di XAMPP:
+- avviare Apache
+- avviare MySQL
+
+---
+
+## 4. Creare il database
+Aprire:
+```text
+http://localhost/phpmyadmin
+```
+
+Creare un nuovo database e importare il file:
+```text
+database.sql
+```
+
+---
+
+## 5. Configurare la connessione
+Modificare il file:
+```text
+config.php
+```
+
+Inserendo:
+```php
+$pdo = new PDO(
+    "mysql:host=localhost;dbname=streetfood",
+    "root",
+    ""
+);
+```
+
+---
+
+## 6. Avviare il progetto
+Aprire il browser e andare su:
+```text
+http://localhost/Sql-Street-Food
+```
+
+---
+
+# 📂 Contenuto della consegna
+
+- File PHP del progetto
+- Script SQL del database
+- README.md
+- File CSS
+- Gestione sessioni e login
+
+---
+
+# ⚠️ Note
+
+- Il database utilizza chiavi primarie e chiavi esterne
+- Sono presenti vincoli relazionali
+- Le transazioni garantiscono coerenza dei dati
+- Alcune operazioni sono disponibili solo agli amministratori
+
+---
+
+
+Il progetto realizza una web application completa per la gestione di un sistema street food tramite database relazionale MySQL.
+
+Sono state implementate:
+- operazioni CRUD
+- gestione ordini
+- autenticazione utenti
+- controllo permessi
+- relazioni tra tabelle
+- utilizzo di PHP con PDO
+- gestione transazioni ACID
