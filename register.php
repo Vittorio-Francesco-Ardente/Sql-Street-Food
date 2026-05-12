@@ -4,33 +4,38 @@ require 'config.php';
 $errore = "";
 $successo = "";
 
-if($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $nome = trim($_POST['nome'] ?? '');
-    $cognome = trim($_POST['cognome'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $password = trim($_POST['password'] ?? '');
     $conferma = trim($_POST['password-confirm'] ?? '');
 
-    if(
+    // RUOLO SELEZIONATO
+    $ruolo = $_POST['ruolo'] ?? 'cliente';
+
+    // sicurezza base
+    if (!in_array($ruolo, ['cliente', 'root'])) {
+        $ruolo = 'cliente';
+    }
+
+    if (
         empty($nome) ||
-        empty($cognome) ||
         empty($email) ||
         empty($password) ||
         empty($conferma)
     ) {
-
         $errore = "Compila tutti i campi";
 
-    } elseif(!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
         $errore = "Email non valida";
 
-    } elseif(strlen($password) < 6) {
+    } elseif (strlen($password) < 6) {
 
         $errore = "Password minimo 6 caratteri";
 
-    } elseif($password !== $conferma) {
+    } elseif ($password !== $conferma) {
 
         $errore = "Le password non coincidono";
 
@@ -38,6 +43,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         try {
 
+            // controllo email esistente
             $check = $pdo->prepare("
                 SELECT id
                 FROM utenti
@@ -48,7 +54,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':email' => $email
             ]);
 
-            if($check->fetch()) {
+            if ($check->fetch()) {
 
                 $errore = "Email già registrata";
 
@@ -61,36 +67,37 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $insert = $pdo->prepare("
                     INSERT INTO utenti(
                         nome,
-                        cognome,
                         email,
-                        password
+                        password,
+                        ruolo
                     )
                     VALUES(
                         :nome,
-                        :cognome,
                         :email,
-                        :password
+                        :password,
+                        :ruolo
                     )
                 ");
 
                 $insert->execute([
                     ':nome' => $nome,
-                    ':cognome' => $cognome,
                     ':email' => $email,
-                    ':password' => $hash
+                    ':password' => $hash,
+                    ':ruolo' => $ruolo
                 ]);
 
                 $pdo->commit();
 
                 $successo = "Registrazione completata";
-
             }
 
-        } catch(PDOException $e) {
+        } catch (PDOException $e) {
 
-            $pdo->rollBack();
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
 
-            $errore = "Errore registrazione";
+            $errore = "Errore registrazione: " . $e->getMessage();
         }
     }
 }
@@ -119,70 +126,52 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <h1>Registrazione</h1>
 
-        <?php if($errore): ?>
-
+        <?php if ($errore): ?>
             <div class="message error">
                 <?php echo $errore; ?>
             </div>
-
         <?php endif; ?>
 
-        <?php if($successo): ?>
-
+        <?php if ($successo): ?>
             <div class="message success">
                 <?php echo $successo; ?>
             </div>
-
         <?php endif; ?>
 
         <div class="input-group">
-
             <label>Nome</label>
-
             <input type="text" name="nome" required>
-
         </div>
 
         <div class="input-group">
-
-            <label>Cognome</label>
-
-            <input type="text" name="cognome" required>
-
-        </div>
-
-        <div class="input-group">
-
             <label>Email</label>
-
             <input type="email" name="email" required>
-
         </div>
 
         <div class="input-group">
-
             <label>Password</label>
-
             <input type="password" name="password" required>
-
         </div>
 
         <div class="input-group">
-
             <label>Conferma Password</label>
-
             <input type="password" name="password-confirm" required>
+        </div>
 
+        <!-- RUOLO -->
+        <div class="input-group">
+            <label>Ruolo</label>
+            <select name="ruolo" required>
+                <option value="cliente">Cliente</option>
+                <option value="root">Root</option>
+            </select>
         </div>
 
         <button type="submit">Registrati</button>
 
         <div class="bottom-link">
-
             Hai già un account?
-
             <a href="login.php">Accedi</a>
-
         </div>
 
     </form>
