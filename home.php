@@ -5,7 +5,6 @@ require 'config.php';
 if (!isset($_SESSION['utente_id'], $_SESSION['utente_ruolo'])) {
     die("Accesso negato");
 }
-
 $idUtente = $_SESSION['utente_id'];
 $ruolo = strtolower($_SESSION['utente_ruolo']); 
 
@@ -18,7 +17,6 @@ $menu = $pdo->query("
 
 /* ---- ORDINI ---- */
 if ($ruolo === 'root') {
-
     $stmt = $pdo->query("
         SELECT id, data_ordine, stato, totale
         FROM ordini
@@ -26,7 +24,6 @@ if ($ruolo === 'root') {
     ");
 
 } else {
-
     $stmt = $pdo->prepare("
         SELECT id, data_ordine, stato, totale
         FROM ordini
@@ -112,7 +109,6 @@ th{background:#333;color:white}
     <a href="modifica_ordine.php?id=<?= $o['id'] ?>">
         <button class="btn">MODIFICA ORDINE</button>
     </a>
-
     <table>
         <tr>
             <th>Prodotto</th>
@@ -136,6 +132,5 @@ th{background:#333;color:white}
 
 </div>
 <?php endforeach; ?>
-
 </body>
 </html>
