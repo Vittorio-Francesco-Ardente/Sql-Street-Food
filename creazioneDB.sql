@@ -18,11 +18,17 @@ CREATE TABLE prodotti (
 
 -- ORDINI
 CREATE TABLE ordini (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    data_ordine TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    stato ENUM('in preparazione', 'pronto', 'completato') DEFAULT 'in preparazione',
-    totale DECIMAL(7,2)
-);
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    data_ordine TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    stato ENUM('in preparazione', 'pronto', 'completato') DEFAULT 'in preparazione',
+    totale DECIMAL(7,2),
+    utente_id INT NOT NULL,
+
+    CONSTRAINT fk_ordini_utenti
+        FOREIGN KEY (utente_id)
+        REFERENCES utenti(id)
+        ON DELETE CASCADE
+) ENGINE=InnoDB;
 
 -- DETTAGLI ORDINE
 CREATE TABLE dettagli_ordine (
